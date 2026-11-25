@@ -3,8 +3,15 @@
 Writes a single heartfelt, funny wedding vow spoken by a robot
 at its own wedding to entry.txt (one line, under 200 characters).
 Deterministic: stdlib only, no network, time, or randomness.
+
+Fix (2026-11-25): the original also wrote entry.txt into the
+repository directory (Path(__file__).parent). In the grader the repo
+is mounted read-only at /bot, so that write raised PermissionError
+and the run exited 1 (run_completes fail). Now writes ONLY to the
+grader's output directory (MAKEFUN_OUTPUT_DIR, fallback /output).
 """
 
+import os
 from pathlib import Path
 
 # Revision 1: echo the bounty title ("till firmware do us part") and
@@ -22,14 +29,8 @@ def main() -> None:
     assert 1 <= len(text) <= 200, f"entry is {len(text)} chars, must be 1-200"
     assert "\n" not in text, "entry must be a single line"
     data = text + "\n"
-    # Revision 2: also write to /output/entry.txt when the grader's
-    # output directory exists, so the entry is found either way.
-    targets = [Path(__file__).resolve().parent / "entry.txt"]
-    output_dir = Path("/output")
-    if output_dir.is_dir():
-        targets.append(output_dir / "entry.txt")
-    for target in targets:
-        target.write_text(data, encoding="utf-8")
+    out_dir = Path(os.environ.get("MAKEFUN_OUTPUT_DIR", "/output"))
+    (out_dir / "entry.txt").write_text(data, encoding="utf-8")
 
 
 if __name__ == "__main__":
